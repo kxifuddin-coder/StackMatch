@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stackmach • My Profile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              400: "#38bdf8",
+              500: "#0ea5e9",
+              600: "#0284c7",
+            },
+          },
+        },
+      },
+      darkMode: "class",
+    };
+  </script>
+</head>
+
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+  <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-12">
+    <div
+      class="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-tr from-brand-500/20 via-slate-900 to-purple-700/20 blur-3xl opacity-60">
+    </div>
+
+    <header class="flex items-center justify-between mb-8">
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2">
+          <img src="{{ url_for('static', filename='logo.png') }}" alt="Stackmach Logo" class="max-h-[60px] w-auto shrink-0 mr-2 rounded">
+          <span class="text-white font-sans font-bold text-2xl tracking-tight">StackMatch</span>
+        </div>
+        <div class="border-l border-slate-700 pl-4">
+          <h1 class="text-xl font-semibold tracking-tight">Profile Settings</h1>
+          <p class="text-xs text-slate-400">
+            Tune your hackathon-ready profile for teammates and organizers.
+          </p>
+        </div>
+      </div>
+
+      <nav class="flex items-center gap-3 text-sm">
+        <a href="{{ url_for('home') }}"
+          class="rounded-full px-3 py-1.5 text-slate-300 hover:text-white hover:bg-slate-800/80 border border-transparent transition">Home</a>
+        <a href="{{ url_for('user_profile', user_id=current_user.id) }}"
+          class="rounded-full px-3 py-1.5 text-slate-300 hover:text-white hover:bg-slate-800/80 border border-transparent transition">Profile</a>
+        <form method="post" action="{{ url_for('logout') }}" class="inline">
+          <button type="submit"
+            class="rounded-full px-3 py-1.5 text-[11px] text-slate-300 hover:text-white hover:bg-slate-800/80 border border-slate-700/70 transition">
+            Log out
+          </button>
+        </form>
+      </nav>
+    </header>
+
+    <main class="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.2fr)]">
+      <section class="rounded-2xl border border-slate-800/80 bg-slate-900/70 p-6 shadow-sm space-y-4">
+        <div class="space-y-1">
+          <p class="text-xs font-semibold tracking-[0.2em] text-brand-400">
+            PROFILE ENGINE
+          </p>
+          <h2 class="text-xl font-semibold tracking-tight">
+            Update your hackathon profile.
+          </h2>
+          <p class="text-xs text-slate-400">
+            Share the way you like to work, what you’re learning, and links to
+            projects or certificates.
+          </p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="space-y-2">
+          {% for category, message in messages %}
+          <div class="text-xs px-3 py-2 rounded-xl border
+              {% if category == 'error' %} border-red-500/60 bg-red-500/10 text-red-200
+              {% else %} border-emerald-500/60 bg-emerald-500/10 text-emerald-200 {% endif %}">
+            {{ message }}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <form method="post" enctype="multipart/form-data" class="space-y-4">
+          <div class="space-y-4 sm:flex sm:items-center sm:gap-6 border-b border-slate-800/80 pb-4 mb-4">
+            <div
+              class="relative h-20 w-20 shrink-0 overflow-hidden rounded-full bg-slate-800 border border-slate-700 shadow-inner">
+              {% if user['profile_picture'] %}
+              <img src="{{ url_for('static', filename='uploads/profile_pics/' + user['profile_picture']) }}"
+                class="h-full w-full object-cover">
+              {% else %}
+              <div
+                class="h-full w-full flex items-center justify-center bg-brand-500/20 text-brand-400 text-xl font-bold">
+                {{ user["name"][:2].upper() if user["name"] else "U" }}
+              </div>
+              {% endif %}
+            </div>
+            <div class="space-y-2">
+              <label for="profile_picture" class="block text-xs font-medium text-slate-200">Profile picture</label>
+              <input type="file" id="profile_picture" name="profile_picture" accept="image/*"
+                class="block w-full text-xs text-slate-400 file:mr-4 file:rounded-full file:border-0 file:bg-slate-800 file:px-4 file:py-2 file:text-xs file:font-semibold file:text-slate-200 hover:file:bg-slate-700 cursor-pointer shadow-sm transition">
+              <p class="text-[10px] text-slate-500">Square image recommended. JPG, GIF or PNG.</p>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label class="block text-xs font-medium text-slate-200">
+              Email
+            </label>
+            <p class="text-xs text-slate-400">
+              {{ user["email"] }}
+            </p>
+          </div>
+
+          <div class="space-y-2">
+            <label for="headline" class="block text-xs font-medium text-slate-200">Headline (LinkedIn style)</label>
+            <input id="headline" name="headline" type="text" value="{{ user['headline'] or '' }}"
+              placeholder="e.g. CS Student | Aspiring Data Scientist | Python & Machine Learning"
+              class="block w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" />
+          </div>
+
+          <div class="grid gap-4 sm:grid-cols-3">
+            <div class="space-y-2 sm:col-span-1">
+              <label for="education_level" class="block text-xs font-medium text-slate-200">Education level</label>
+              <input id="education_level" name="education_level" type="text" value="{{ user['education_level'] or '' }}"
+                placeholder="1st year undergraduate, 2nd year master’s, etc."
+                class="block w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" />
+            </div>
+
+            <div class="space-y-2 sm:col-span-1">
+              <label for="role" class="block text-xs font-medium text-slate-200">Preferred role</label>
+              <input id="role" name="role" type="text" value="{{ user['role'] or '' }}"
+                placeholder="Frontend, Backend, Data, Design, PM..."
+                class="block w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" />
+            </div>
+
+            <div class="space-y-2 sm:col-span-1">
+              <label for="location" class="block text-xs font-medium text-slate-200">Location</label>
+              <input id="location" name="location" type="text" value="{{ user['location'] or '' }}"
+                placeholder="Bangalore, Boston, Singapore..."
+                class="block w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" />
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label for="skills" class="block text-xs font-medium text-slate-200">Skills (comma‑separated)</label>
+            <textarea id="skills" name="skills" rows="2" placeholder="Python, React, Figma, statistics, public speaking"
+              class="block w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">{{ (user['skills'] or '') | trim }}</textarea>
+          </div>
+
+          <div class="space-y-2">
+            <label for="num_hackathons" class="block text-xs font-medium text-slate-200">Number of hackathons
+              attended</label>
+            <input id="num_hackathons" name="num_hackathons" type="number" min="0"
+              value="{{ user['num_hackathons'] or '' }}" placeholder="0"
+              class="block w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" />
+          </div>
+
+          <div class="space-y-2">
+            <label for="hackathon_role" class="block text-xs font-medium text-slate-200">Role played in past
+              hackathons</label>
+            <input id="hackathon_role" name="hackathon_role" type="text" value="{{ user['hackathon_role'] or '' }}"
+              placeholder="Backend, Data Analysis, UI/UX, product, etc."
+              class="block w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" />
+          </div>
+
+          <div class="space-y-2">
+            <label for="project_links" class="block text-xs font-medium text-slate-200">Project / certificate
+              links</label>
+            <textarea id="project_links" name="project_links" rows="3"
+              placeholder="GitHub repos, Kaggle profiles, portfolios, LinkedIn certs..."
+              class="block w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">{{ (user['project_links'] or '') | trim }}</textarea>
+          </div>
+
+          <button type="submit"
+            class="inline-flex items-center justify-center rounded-xl bg-brand-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-brand-400 transition shadow-sm">
+            Save profile
+          </button>
+        </form>
+      </section>
+
+      <aside class="space-y-3 rounded-2xl border border-slate-800/80 bg-slate-950/60 p-5 shadow-sm">
+        <h3 class="text-sm font-semibold text-slate-100 mb-1.5">
+          How teammates might see you
+        </h3>
+        <p class="text-xs text-slate-400">
+          Use this space to capture how you like to collaborate. Clear,
+          specific notes help others quickly understand your strengths and
+          interests.
+        </p>
+        <div class="mt-3 space-y-2 text-[11px] text-slate-300">
+          <p>
+            <span class="text-slate-400">Example:</span> “2nd‑year CS
+            student, strongest with Python + data wrangling. I like
+            front‑of‑room communication and onboarding newer teammates.”
+          </p>
+          <p>
+            <span class="text-slate-400">Tip:</span> Paste links to public
+            repos or certificates you’re comfortable sharing.
+          </p>
+        </div>
+      </aside>
+    </main>
+  </div>
+</body>
+
+</html>

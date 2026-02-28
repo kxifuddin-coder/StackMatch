@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stackmach • Home</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              400: "#38bdf8",
+              500: "#0ea5e9",
+              600: "#0284c7",
+            },
+          },
+        },
+      },
+      darkMode: "class",
+    };
+  </script>
+  <!-- Add Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="bg-slate-950 text-slate-100 min-h-screen selection:bg-brand-500/30">
+  <div class="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Glow background -->
+    <div
+      class="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-tr from-brand-500/10 via-slate-950 to-purple-700/10 blur-3xl opacity-60">
+    </div>
+
+    <!-- Top bar / global nav -->
+    <header class="mb-8 relative z-50">
+      <div class="flex items-center justify-between gap-6">
+        <!-- Left: Brand + Links -->
+        <div class="flex items-center gap-6">
+          <div class="flex items-center gap-3">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Stackmach Logo" class="max-h-[60px] w-auto shrink-0 mr-2 rounded">
+            <span class="text-white font-sans font-bold text-2xl tracking-tight">StackMatch</span>
+          </div>
+
+          {% if current_user.is_authenticated %}
+          <nav class="hidden md:flex items-center gap-2 text-sm font-medium">
+            <a href="{{ url_for('home') }}" class="text-brand-400 hover:text-brand-300 transition-colors">Home</a>
+            <a href="{{ url_for('user_profile', user_id=current_user.id) }}"
+              class="text-slate-300 hover:text-white transition-colors">Profile</a>
+            <a href="{{ url_for('logout') }}" class="text-slate-400 hover:text-red-400 transition-colors">Logout</a>
+          </nav>
+          {% else %}
+          <nav class="hidden md:flex items-center gap-2 text-sm font-medium">
+            <a href="{{ url_for('login') }}" class="text-slate-300 hover:text-white transition-colors">Log in</a>
+            <a href="{{ url_for('register') }}" class="text-brand-400 hover:text-brand-300 transition-colors">Sign
+              up</a>
+          </nav>
+          {% endif %}
+        </div>
+
+        <!-- Center: Prominent Search -->
+        <div class="flex-1 max-w-2xl relative">
+          <form id="global-search-form" method="get" action="{{ url_for('home') }}"
+            class="w-full flex items-center gap-2">
+            <div class="relative w-full group">
+              <div class="absolute inset-y-0 left-0 pl-4 flex items-center col-span-1 pointer-events-none">
+                <i
+                  class="fa-solid fa-magnifying-glass text-slate-500 group-focus-within:text-brand-400 transition-colors"></i>
+              </div>
+              <input id="query" name="query" type="text" value="{{ query or '' }}"
+                placeholder="Search skills, names, or stacks…"
+                class="w-full pl-11 pr-4 py-2.5 rounded-2xl border border-slate-700/80 bg-slate-900/60 shadow-sm backdrop-blur-md transition-all duration-300 focus:outline-none focus:border-brand-500/70 focus:ring-1 focus:ring-brand-500/50 focus:bg-slate-900/90 hover:border-slate-500 text-sm placeholder-slate-500" />
+            </div>
+
+            <!-- Right of Search: Filter toggle -->
+            <div class="relative">
+              <button type="button" id="filter-toggle"
+                class="shrink-0 flex items-center gap-2 rounded-2xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-600/80 px-4 py-2.5 text-sm font-medium text-slate-200 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-brand-500 hover:shadow-lg hover:shadow-cyan-500/20 active:scale-95">
+                <i class="fa-solid fa-sliders text-xs"></i>
+                Filter
+              </button>
+
+              <!-- Hidden Dropdown Menu -->
+              <div id="filter-dropdown"
+                class="absolute right-0 top-full mt-2 w-72 rounded-2xl border border-slate-700/80 bg-slate-900 shadow-2xl shadow-black/50 p-4 hidden flex-col gap-4 transform origin-top-right transition-all z-50">
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-2">
+                  Filters</p>
+
+                <div class="space-y-1.5">
+                  <label for="role" class="block text-xs font-medium text-slate-300">Role</label>
+                  <select id="role" name="role"
+                    class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 hover:border-slate-500 transition-colors cursor-pointer">
+                    <option value="" {% if not role_filter %}selected{% endif %}>Any Role</option>
+                    <option value="Frontend" {% if role_filter=='Frontend' %}selected{% endif %}>Frontend</option>
+                    <option value="Backend" {% if role_filter=='Backend' %}selected{% endif %}>Backend</option>
+                    <option value="Data" {% if role_filter=='Data' %}selected{% endif %}>Data</option>
+                    <option value="Research" {% if role_filter=='Research' %}selected{% endif %}>Research</option>
+                    <option value="UI/UX" {% if role_filter=='UI/UX' %}selected{% endif %}>UI/UX</option>
+                    <option value="Product" {% if role_filter=='Product' %}selected{% endif %}>Product</option>
+                  </select>
+                </div>
+
+                <div class="space-y-1.5">
+                  <label for="education_level" class="block text-xs font-medium text-slate-300">Education Level</label>
+                  <input id="education_level" name="education_level" type="text" value="{{ education_filter or '' }}"
+                    placeholder="e.g. 1st year"
+                    class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm placeholder-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 hover:border-slate-500 transition-colors" />
+                </div>
+
+                <div class="space-y-1.5">
+                  <label for="location" class="block text-xs font-medium text-slate-300">Location</label>
+                  <input id="location" name="location" type="text" value="{{ location_filter or '' }}"
+                    placeholder="e.g. Boston"
+                    class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm placeholder-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 hover:border-slate-500 transition-colors" />
+                </div>
+
+                <div class="pt-2">
+                  <button type="submit"
+                    class="w-full rounded-xl bg-brand-500 hover:bg-brand-400 text-slate-950 font-semibold py-2 text-sm transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/20 active:scale-95 shadow-brand-500/20 shadow-md">
+                    Apply Filters
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </header>
+
+    <!-- Layout Split -->
+    <main
+      class="grid grid-cols-1 lg:grid-cols-[1fr_1fr] xl:grid-cols-[1.2fr_1.8fr] gap-6 items-stretch h-[calc(100vh-140px)] min-h-[600px]">
+
+      <!-- Left Pane: Recommendation engine -->
+      <section
+        class="flex flex-col rounded-2xl border border-slate-800/80 bg-slate-900/40 backdrop-blur-md overflow-hidden shadow-xl shadow-black/20">
+        <div class="p-5 border-b border-slate-800/80 bg-slate-900/80 relative overflow-hidden">
+          <!-- decorative glow -->
+          <div class="absolute -top-10 -right-10 w-32 h-32 bg-brand-500/10 rounded-full blur-2xl"></div>
+
+          <p class="text-xs font-bold tracking-widest text-brand-500 mb-1">RECOMMENDATION ENGINE</p>
+          <h2 class="text-2xl font-semibold tracking-tight text-white mb-1">Find your team.</h2>
+          <p class="text-sm text-slate-400">Discover profiles that match your skills.</p>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+          {% for user in users %}
+          <article
+            class="group relative overflow-hidden rounded-2xl border border-slate-700/50 bg-slate-800/40 p-5 transition-all duration-300 hover:border-brand-500/70 hover:bg-slate-800/60 hover:shadow-lg hover:shadow-cyan-500/10 hover:-translate-y-0.5 cursor-pointer"
+            onclick="window.location.href='{{ url_for('user_profile', user_id=user['id']) }}'">
+            <div class="flex items-start justify-between gap-3 mb-3">
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 border border-slate-600 flex items-center justify-center shadow-inner group-hover:border-brand-500/50 transition-colors">
+                  <span class="text-sm font-semibold text-slate-300">{{ user["name"][:2].upper() }}</span>
+                </div>
+                <div>
+                  <h3 class="text-base font-medium text-slate-100 group-hover:text-brand-300 transition-colors">{{
+                    user["name"] }}</h3>
+                  <p class="text-xs text-slate-400">
+                    {% if user["role"] %}<span class="text-brand-200">{{ user["role"] }}</span> • {% endif %}
+                    {{ user["location"] or "Location Remote" }}
+                  </p>
+                </div>
+              </div>
+              {% if user["num_hackathons"] %}
+              <span
+                class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                {{ user["num_hackathons"] }} Hackathons
+              </span>
+              {% endif %}
+            </div>
+
+            <div class="text-sm text-slate-300/90 leading-relaxed mb-4 line-clamp-2">
+              {{ user["skills"] or "No specific skills listed." }}
+            </div>
+
+            <div class="flex items-center justify-between text-xs border-t border-slate-700/50 pt-3">
+              <span class="text-slate-500 flex items-center gap-1">
+                <i class="fa-solid fa-graduation-cap text-[10px]"></i>
+                {{ user["education_level"] or "Student" }}
+              </span>
+              <span
+                class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800 text-brand-300 font-medium group-hover:bg-brand-500/20 group-hover:text-brand-300 border border-slate-700 group-hover:border-brand-500/30 transition-all shadow-sm transform translate-x-2 group-hover:translate-x-0 opacity-0 group-hover:opacity-100">
+                View Full Profile <i class="fa-solid fa-arrow-right text-[10px]"></i>
+              </span>
+            </div>
+          </article>
+          {% else %}
+          <div class="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400">
+            <div class="w-16 h-16 rounded-full bg-slate-800/50 flex items-center justify-center mb-4">
+              <i class="fa-solid fa-ghost text-2xl opacity-50"></i>
+            </div>
+            <p class="text-sm">No profiles found matching your search.</p>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <!-- Right Pane: Inbox (LinkedIn Style) -->
+      <section
+        class="rounded-2xl border border-slate-800/80 bg-slate-900/90 overflow-hidden shadow-2xl flex backdrop-blur-md">
+        {% if current_user.is_authenticated %}
+        <!-- Chat List Sidebar -->
+        <div class="w-1/3 min-w-[200px] border-r border-slate-800/80 flex flex-col bg-slate-950/50">
+          <div class="p-4 border-b border-slate-800/80">
+            <h3 class="font-semibold text-slate-100">Messages</h3>
+          </div>
+          <div class="flex-1 overflow-y-auto custom-scrollbar" id="conversations-list">
+            {% for conv in conversations %}
+            <div
+              class="p-4 border-b border-slate-800/50 hover:bg-slate-800/50 cursor-pointer transition-colors relative conversation-item"
+              data-user-id="{{ conv['other_user_id'] }}"
+              onclick="openChat({{ conv['other_user_id'] }}, '{{ conv['other_user_name'] }}', '{{ conv['other_user_role'] or 'Student' }}')">
+              <div class="flex items-start gap-3">
+                <div class="relative w-10 h-10 shrink-0">
+                  <div
+                    class="w-full h-full rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 flex items-center justify-center">
+                    <span class="text-xs font-semibold text-indigo-300">{{ conv["other_user_name"][:2].upper() }}</span>
+                  </div>
+                  {% if conv['unread'] > 0 %}
+                  <div
+                    class="absolute top-0 right-0 w-3 h-3 bg-red-500 border-2 border-slate-900 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.5)]">
+                  </div>
+                  {% endif %}
+                </div>
+                <div class="overflow-hidden">
+                  <h4 class="text-sm font-medium text-slate-200 truncate pr-2">{{ conv["other_user_name"] }}</h4>
+                  <p class="text-xs text-slate-500 truncate mt-0.5">Click to view chat</p>
+                </div>
+              </div>
+            </div>
+            {% else %}
+            <div class="p-6 text-center text-slate-500 text-sm">
+              No active conversations yet. Click a profile on the left to start chatting!
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Active Chat Window -->
+        <div class="flex-1 flex flex-col bg-slate-900/40 relative">
+          <div id="chat-empty-state"
+            class="absolute inset-0 flex flex-col items-center justify-center text-center p-6 z-10">
+            <div
+              class="h-24 w-24 rounded-full bg-slate-800/30 flex items-center justify-center mb-6 border border-slate-700/30">
+              <i class="fa-regular fa-paper-plane text-4xl text-brand-500/50"></i>
+            </div>
+            <h3 class="text-lg font-medium text-slate-200 mb-2">Your Inbox</h3>
+            <p class="text-sm text-slate-400 max-w-[250px]">Select a conversation from the left or message a new profile
+              to start collaborating.</p>
+          </div>
+
+          <!-- Chat Header -->
+          <div id="chat-header"
+            class="hidden p-4 border-b border-slate-800/80 bg-slate-900/60 flex items-center gap-3 backdrop-blur-md z-20">
+            <div
+              class="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0">
+              <span id="chat-header-initials" class="text-xs font-semibold text-slate-300"></span>
+            </div>
+            <div>
+              <h3 id="chat-header-name" class="font-medium text-slate-100 leading-tight">Name</h3>
+              <p id="chat-header-role" class="text-[11px] text-slate-400 mt-0.5">Role</p>
+            </div>
+          </div>
+
+          <!-- Messages Area -->
+          <div id="messages-container" class="hidden flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar z-20">
+            <!-- Messages injected here via JS -->
+          </div>
+
+          <!-- Input Area -->
+          <div id="chat-input-area" class="hidden p-4 border-t border-slate-800/80 bg-slate-900/80 z-20">
+            <form id="chat-form" class="flex items-end gap-2 relative">
+              <textarea id="message-input" rows="1" placeholder="Write a message..."
+                class="flex-1 rounded-2xl border border-slate-700/80 bg-slate-950/50 px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/50 resize-none overflow-hidden max-h-32 transition-colors custom-scrollbar"
+                style="min-height: 46px;"></textarea>
+              <button type="submit" id="send-button"
+                class="h-[46px] w-[46px] shrink-0 rounded-2xl bg-brand-500 hover:bg-brand-400 text-slate-950 flex items-center justify-center transition-all duration-300 hover:shadow-lg hover:shadow-brand-500/30 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fa-solid fa-paper-plane text-sm translate-x-[-1px] translate-y-[-1px]"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+        {% else %}
+        <!-- Login Prompt for Guests -->
+        <div class="w-full flex flex-col items-center justify-center p-8 text-center bg-slate-900/40">
+          <div
+            class="h-20 w-20 rounded-2xl bg-brand-500/10 border border-brand-500/30 flex items-center justify-center mb-6">
+            <i class="fa-solid fa-lock text-3xl text-brand-400"></i>
+          </div>
+          <h3 class="text-xl font-semibold text-slate-200 mb-2">Sign in to message</h3>
+          <p class="text-sm text-slate-400 max-w-sm mb-6">Create an account or log in to start coordinating with
+            potential teammates.</p>
+          <div class="flex gap-4">
+            <a href="{{ url_for('login') }}"
+              class="px-6 py-2.5 rounded-xl bg-slate-800 text-slate-200 hover:bg-slate-700 transition font-medium border border-slate-700 hover:border-slate-600">Log
+              In</a>
+            <a href="{{ url_for('register') }}"
+              class="px-6 py-2.5 rounded-xl bg-brand-500 text-slate-950 hover:bg-brand-400 transition font-semibold shadow-lg shadow-brand-500/20 hover:scale-105">Sign
+              Up</a>
+          </div>
+        </div>
+        {% endif %}
+      </section>
+    </main>
+  </div>
+
+  <style>
+    /* Custom Scrollbar for sleek dark mode */
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background-color: rgba(71, 85, 105, 0.4);
+      border-radius: 20px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background-color: rgba(71, 85, 105, 0.8);
+    }
+  </style>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script>
+    // Filter Dropdown Logic
+    const filterToggle = document.getElementById("filter-toggle");
+    const filterDropdown = document.getElementById("filter-dropdown");
+
+    if (filterToggle && filterDropdown) {
+      filterToggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        filterDropdown.classList.toggle("hidden");
+        filterDropdown.classList.toggle("flex");
+      });
+
+      // Close when clicking outside
+      document.addEventListener("click", (e) => {
+        if (!filterToggle.contains(e.target) && !filterDropdown.contains(e.target)) {
+          filterDropdown.classList.add("hidden");
+          filterDropdown.classList.remove("flex");
+        }
+      });
+
+      // Prevent closing when interacting with the form inside
+      filterDropdown.addEventListener("click", (e) => {
+        e.stopPropagation();
+      });
+    }
+
+    // Chat Logic (Auth dependent)
+    {% if current_user.is_authenticated %}
+    const currentUserId = {{ current_user.id }};
+    let activeReceiverId = null;
+    let activeRoomId = null;
+
+    const socket = io();
+
+    // UI Elements
+    const emptyState = document.getElementById("chat-empty-state");
+    const chatHeader = document.getElementById("chat-header");
+    const chatHeaderName = document.getElementById("chat-header-name");
+    const chatHeaderInitials = document.getElementById("chat-header-initials");
+    const chatHeaderRole = document.getElementById("chat-header-role");
+    const messagesContainer = document.getElementById("messages-container");
+    const chatInputArea = document.getElementById("chat-input-area");
+    const messageInput = document.getElementById("message-input");
+    const chatForm = document.getElementById("chat-form");
+    const sendBtn = document.getElementById("send-button");
+
+    // Auto-resize textarea
+    messageInput.addEventListener('input', function () {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight) + 'px';
+      if (this.value.trim() === '') {
+        sendBtn.disabled = true;
+      } else {
+        sendBtn.disabled = false;
+      }
+    });
+    sendBtn.disabled = true;
+
+    // Handle Enter to send (Shift+Enter for newline)
+    messageInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        chatForm.dispatchEvent(new Event('submit'));
+      }
+    });
+
+    function formatTime(isoString) {
+      const date = new Date(isoString);
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function appendMessage(msgData, fromMe) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "flex w-full " + (fromMe ? "justify-end" : "justify-start");
+
+      const bubble = document.createElement("div");
+      bubble.className = "max-w-[80%] rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed relative group ";
+
+      if (fromMe) {
+        bubble.className += "bg-brand-500 text-slate-950 rounded-br-sm shadow-md shadow-brand-500/10";
+      } else {
+        bubble.className += "bg-slate-800 text-slate-100 border border-slate-700/50 rounded-bl-sm";
+      }
+
+      const text = document.createElement("p");
+      text.textContent = msgData.message || msgData.message_text;
+
+      const time = document.createElement("span");
+      time.className = "text-[9px] block mt-1 text-right opacity-60 font-medium ";
+      time.className += fromMe ? "text-slate-900" : "text-slate-400";
+
+      // Use provided timestamp or current time
+      time.textContent = msgData.timestamp ? formatTime(msgData.timestamp) : formatTime(new Date().toISOString());
+
+      bubble.appendChild(text);
+      bubble.appendChild(time);
+      wrapper.appendChild(bubble);
+
+      messagesContainer.appendChild(wrapper);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    async function openChat(receiverId, name, role) {
+      if (activeReceiverId === receiverId) return; // Already open
+
+      // Remove active state from all items
+      document.querySelectorAll('.conversation-item').forEach(el => {
+        el.classList.remove('bg-slate-800/80', 'border-brand-500/50');
+      });
+
+      // Highlight active conversation in sidebar
+      const sidebarItem = document.querySelector(`.conversation-item[data-user-id="${receiverId}"]`);
+      if (sidebarItem) {
+        sidebarItem.classList.add('bg-slate-800/80', 'border-brand-500/50');
+        // Remove unread dot if present
+        const dot = sidebarItem.querySelector('.bg-red-500');
+        if (dot) dot.remove();
+      }
+
+      activeReceiverId = receiverId;
+
+      // Update UI state
+      emptyState.classList.add("hidden");
+      chatHeader.classList.remove("hidden");
+      messagesContainer.classList.remove("hidden");
+      chatInputArea.classList.remove("hidden");
+
+      // Update Header info
+      chatHeaderName.textContent = name;
+      chatHeaderInitials.textContent = name.substring(0, 2).toUpperCase();
+      chatHeaderRole.textContent = role || "Member";
+
+      // Clear messages and show loading (quick UI flash)
+      messagesContainer.innerHTML = '<div class="text-center text-slate-500 text-xs mt-4">Loading messages...</div>';
+
+      try {
+        const res = await fetch(`/api/chat/${receiverId}`);
+        const data = await res.json();
+
+        activeRoomId = data.room_id;
+
+        // Join the socket room
+        socket.emit("join", { room: activeRoomId });
+
+        // Render messages
+        messagesContainer.innerHTML = ''; // clear loading
+        if (data.messages && data.messages.length > 0) {
+          data.messages.forEach(msg => {
+            appendMessage(msg, msg.sender_id === currentUserId);
+          });
+        } else {
+          messagesContainer.innerHTML = `
+                    <div class="h-full flex flex-col items-center justify-center text-center text-slate-500 py-10">
+                        <p class="text-sm">Start of conversation</p>
+                        <p class="text-[11px] mt-1">Say hi to coordinate your project.</p>
+                    </div>
+                  `;
+        }
+
+      } catch (err) {
+        console.error("Failed to load conversation", err);
+        messagesContainer.innerHTML = '<div class="text-center text-red-400 text-xs mt-4">Failed to load messages. Please try again.</div>';
+      }
+    }
+
+    socket.on("receive_message", (payload) => {
+      // Verify if it's meant for the active currently open chat
+      // Room ID matches format: chat_lowId_highId
+      const expectedParams = [currentUserId, payload.sender_id].sort((a, b) => a - b);
+      const expectedRoomId = `chat_${expectedParams[0]}_${expectedParams[1]}`;
+
+      if (activeRoomId === expectedRoomId && activeRoomId === payload.room) {
+        // Append to active chat
+        // Remove "Start of conversation" message if present
+        if (messagesContainer.innerHTML.includes("Start of conversation")) {
+          messagesContainer.innerHTML = '';
+        }
+        appendMessage(payload, false);
+      } else {
+        // Not the active chat, update the sidebar unread counter visually
+        // (If we were doing full dynamic sidebar, we'd move it to top)
+        const sidebarItem = document.querySelector(`.conversation-item[data-user-id="${payload.sender_id}"]`);
+        if (sidebarItem) {
+          // check if dot exists
+          if (!sidebarItem.querySelector('.bg-red-500')) {
+            // Insert unread dot
+            const avatarBox = sidebarItem.querySelector('.relative');
+            const dot = document.createElement('div');
+            dot.className = "absolute top-0 right-0 w-3 h-3 bg-red-500 border-2 border-slate-900 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.5)]";
+            avatarBox.appendChild(dot);
+          }
+        }
+      }
+    });
+
+    chatForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (!activeRoomId || !activeReceiverId) return;
+
+      const message = messageInput.value.trim();
+      if (!message) return;
+
+      const now = new Date().toISOString();
+      const payload = {
+        room: activeRoomId,
+        receiver_id: activeReceiverId,
+        message: message,
+      };
+
+      // Emit to server
+      socket.emit("send_message", payload);
+
+      // Remove "Start of conversation" message if present
+      if (messagesContainer.innerHTML.includes("Start of conversation")) {
+        messagesContainer.innerHTML = '';
+      }
+
+      // Optimistically append Locally
+      appendMessage({
+        message: message,
+        timestamp: now
+      }, true);
+
+      // Reset input
+      messageInput.value = "";
+      messageInput.style.height = "auto";
+      sendBtn.disabled = true;
+      messageInput.focus();
+    });
+    {% endif %}
+  </script>
+</body>
+
+</html>

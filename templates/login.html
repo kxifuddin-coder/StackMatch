@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stackmach • Log in</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              400: "#38bdf8",
+              500: "#0ea5e9",
+              600: "#0284c7",
+            },
+          },
+        },
+      },
+      darkMode: "class",
+    };
+  </script>
+</head>
+
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+  <div class="relative max-w-lg mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12 lg:py-16">
+    <div
+      class="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-tr from-brand-500/20 via-slate-900 to-purple-700/20 blur-3xl opacity-60">
+    </div>
+
+    <header class="flex items-center justify-between mb-8">
+      <div class="flex items-center gap-3">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Stackmach Logo" class="max-h-[60px] w-auto shrink-0 mr-2 rounded">
+        <div>
+          <h1 class="text-xl font-sans font-bold tracking-tight text-white">
+            StackMatch
+          </h1>
+          <p class="text-xs text-slate-400">
+            Log in to view student profiles and dashboards.
+          </p>
+        </div>
+      </div>
+
+      <nav class="flex items-center gap-3 text-sm">
+        <a href="{{ url_for('home') }}"
+          class="rounded-full px-3 py-1.5 text-slate-300 hover:text-white hover:bg-slate-800/80 border border-transparent transition">Projects</a>
+        <a href="{{ url_for('login') }}"
+          class="rounded-full px-3 py-1.5 bg-slate-800 text-slate-100 border border-slate-700/70 shadow-sm">Log in</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="rounded-2xl border border-slate-800/80 bg-slate-900/70 p-6 shadow-sm space-y-4">
+        <div>
+          <p class="text-xs font-semibold tracking-[0.2em] text-brand-400">
+            SIGN IN
+          </p>
+          <h2 class="mt-1 text-xl font-semibold tracking-tight">
+            Welcome back.
+          </h2>
+          <p class="mt-1 text-xs text-slate-400">
+            Use the email and password you registered with to access
+            profiles.
+          </p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="space-y-2">
+          {% for category, message in messages %}
+          <div class="text-xs px-3 py-2 rounded-xl border
+              {% if category == 'error' %} border-red-500/60 bg-red-500/10 text-red-200
+              {% else %} border-emerald-500/60 bg-emerald-500/10 text-emerald-200 {% endif %}">
+            {{ message }}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <form method="post" class="space-y-4">
+          <div class="space-y-2">
+            <label for="email" class="block text-xs font-medium text-slate-200">Email</label>
+            <input id="email" name="email" type="email" required
+              class="block w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              placeholder="you@example.edu" />
+          </div>
+
+          <div class="space-y-2">
+            <label for="password" class="block text-xs font-medium text-slate-200">Password</label>
+            <input id="password" name="password" type="password" required
+              class="block w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              placeholder="••••••••" />
+          </div>
+
+          <button type="submit"
+            class="w-full inline-flex justify-center items-center rounded-xl bg-brand-500 px-3 py-2 text-sm font-medium text-slate-950 hover:bg-brand-400 transition shadow-sm">
+            Log in
+          </button>
+        </form>
+
+        <p class="text-[11px] text-slate-400">
+          Don’t have an account?
+          <a href="{{ url_for('register') }}"
+            class="text-brand-300 hover:text-brand-200 underline-offset-2 hover:underline">Create one</a>.
+        </p>
+      </section>
+    </main>
+  </div>
+</body>
+
+</html

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stackmach • Chat</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              400: "#38bdf8",
+              500: "#0ea5e9",
+              600: "#0284c7",
+            },
+          },
+        },
+      },
+      darkMode: "class",
+    };
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="bg-slate-950 text-slate-100 min-h-screen selection:bg-brand-500/30">
+  <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+    <div
+      class="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-tr from-brand-500/10 via-slate-950 to-purple-700/10 blur-3xl opacity-60">
+    </div>
+
+    <header class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-4">
+        <a href="{{ url_for('home') }}"
+          class="hidden sm:inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-800/80 border border-slate-700/80 text-slate-400 hover:text-white hover:bg-slate-700 hover:scale-105 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/20">
+          <!-- Back arrow -->
+          <i class="fa-solid fa-arrow-left text-sm"></i>
+        </a>
+        <div class="flex items-center gap-2 border-r border-slate-700 pr-4">
+          <img src="{{ url_for('static', filename='logo.png') }}" alt="Stackmach Logo" class="max-h-[60px] w-auto shrink-0 mr-2 rounded">
+          <span class="text-white font-sans font-bold text-2xl tracking-tight hidden sm:block">StackMatch</span>
+        </div>
+        <div>
+          <h1 class="text-lg font-semibold tracking-tight text-white flex items-center gap-2">
+            {{ other_user["name"] }}
+            <span
+              class="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-800 border border-slate-700 text-slate-300">Chat</span>
+          </h1>
+          <p class="text-xs text-slate-400">
+            Real‑time messages to coordinate your next hackathon project.
+          </p>
+        </div>
+      </div>
+    </header>
+
+    <main
+      class="rounded-2xl border border-slate-800/80 bg-slate-900/40 shadow-xl shadow-black/20 flex flex-col h-[70vh] backdrop-blur-md overflow-hidden">
+      <div id="messages" class="flex-1 overflow-y-auto px-6 py-4 space-y-4 custom-scrollbar scroll-smooth">
+        {% for msg in messages %}
+        {% set from_me = (msg["sender_id"] == current_user_id) %}
+        <div class="flex w-full {{ 'justify-end' if from_me else 'justify-start' }}">
+          <div class="max-w-[75%] rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed relative group
+              {% if from_me %}
+                bg-brand-500 text-slate-950 rounded-br-sm shadow-md shadow-brand-500/10
+              {% else %}
+                bg-slate-800 text-slate-100 border border-slate-700/50 rounded-bl-sm
+              {% endif %}">
+            <p>{{ msg["message_text"] }}</p>
+            <p
+              class="mt-1 text-[9px] block text-right opacity-60 font-medium {% if from_me %}text-slate-900{% else %}text-slate-400{% endif %}">
+              <script>document.write(new Date("{{ msg['timestamp'] }}").toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));</script>
+            </p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <form id="chat-form" class="border-t border-slate-800/80 bg-slate-900/80 p-4 flex items-end gap-3 z-20">
+        <textarea id="message-input" rows="1" placeholder="Type a message..."
+          class="flex-1 rounded-2xl border border-slate-700/80 bg-slate-950/50 px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/50 resize-none overflow-hidden max-h-32 transition-colors custom-scrollbar"
+          style="min-height: 46px;"></textarea>
+        <button type="submit" id="send-button"
+          class="h-[46px] w-[46px] shrink-0 rounded-2xl bg-brand-500 hover:bg-brand-400 text-slate-950 flex items-center justify-center transition-all duration-300 hover:shadow-lg hover:shadow-brand-500/30 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+          <i class="fa-solid fa-paper-plane text-sm translate-x-[-1px] translate-y-[-1px]"></i>
+        </button>
+      </form>
+    </main>
+  </div>
+
+  <style>
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background-color: rgba(71, 85, 105, 0.4);
+      border-radius: 20px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background-color: rgba(71, 85, 105, 0.8);
+    }
+  </style>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script>
+    const roomId = "{{ room_id }}";
+    const receiverId = {{ other_user["id"] }};
+    const currentUserId = {{ current_user_id }};
+    const messagesEl = document.getElementById("messages");
+    const formEl = document.getElementById("chat-form");
+    const inputEl = document.getElementById("message-input");
+    const sendBtn = document.getElementById("send-button");
+
+    const socket = io();
+
+    socket.on("connect", () => {
+      socket.emit("join", { room: roomId });
+    });
+
+    // Auto-resize textarea
+    inputEl.addEventListener('input', function () {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight) + 'px';
+      sendBtn.disabled = this.value.trim() === '';
+    });
+    sendBtn.disabled = inputEl.value.trim() === '';
+
+    // Handle Enter
+    inputEl.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        formEl.dispatchEvent(new Event('submit'));
+      }
+    });
+
+    function formatTime(isoString) {
+      return new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function appendMessage(payload, fromMe) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "flex w-full " + (fromMe ? "justify-end" : "justify-start");
+
+      const bubble = document.createElement("div");
+      bubble.className = "max-w-[75%] rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed relative group ";
+
+      if (fromMe) {
+        bubble.className += "bg-brand-500 text-slate-950 rounded-br-sm shadow-md shadow-brand-500/10";
+      } else {
+        bubble.className += "bg-slate-800 text-slate-100 border border-slate-700/50 rounded-bl-sm";
+      }
+
+      const textP = document.createElement("p");
+      textP.textContent = payload.message || payload.message_text;
+
+      const tsP = document.createElement("p");
+      tsP.className = "mt-1 text-[9px] block text-right opacity-60 font-medium " + (fromMe ? "text-slate-900" : "text-slate-400");
+      tsP.textContent = payload.timestamp ? formatTime(payload.timestamp) : formatTime(new Date().toISOString());
+
+      bubble.appendChild(textP);
+      bubble.appendChild(tsP);
+      wrapper.appendChild(bubble);
+      messagesEl.appendChild(wrapper);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    socket.on("receive_message", (payload) => {
+      if (payload.sender_id === currentUserId) return;
+      appendMessage(payload, false);
+    });
+
+    formEl.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const message = inputEl.value.trim();
+      if (!message) return;
+
+      const now = new Date().toISOString();
+      const payload = {
+        room: roomId,
+        receiver_id: receiverId,
+        message,
+      };
+
+      socket.emit("send_message", payload);
+
+      appendMessage({
+        message,
+        timestamp: now,
+      }, true);
+
+      inputEl.value = "";
+      inputEl.style.height = "auto";
+      sendBtn.disabled = true;
+      inputEl.focus();
+    });
+
+    window.addEventListener("load", () => {
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    });
+  </script>
+</body>
+
+</html>

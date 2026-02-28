@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stackmach • {{ user["name"] }} Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            400: "#38bdf8",
+                            500: "#0ea5e9",
+                            600: "#0284c7",
+                        },
+                    },
+                },
+            },
+            darkMode: "class",
+        };
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+    <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-12">
+        <div
+            class="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-tr from-brand-500/20 via-slate-900 to-purple-700/20 blur-3xl opacity-60">
+        </div>
+
+        <header class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-4">
+                <a href="{{ url_for('home') }}"
+                    class="hidden sm:inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-800/80 border border-slate-700/80 text-slate-400 hover:text-white hover:bg-slate-700 hover:scale-105 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/20">
+                    <i class="fa-solid fa-arrow-left text-sm"></i>
+                </a>
+                <div class="flex items-center gap-2 border-r border-slate-700 pr-4">
+                    <img src="{{ url_for('static', filename='logo.png') }}" alt="Stackmach Logo" class="max-h-[60px] w-auto shrink-0 mr-2 rounded">
+                    <span
+                        class="text-white font-sans font-bold text-2xl tracking-tight hidden sm:block">StackMatch</span>
+                </div>
+                <div>
+                    <h1 class="text-xl font-semibold tracking-tight">Full Profile</h1>
+                </div>
+            </div>
+
+            <nav class="flex items-center gap-3 text-sm">
+                <a href="{{ url_for('home') }}"
+                    class="rounded-full px-3 py-1.5 text-slate-300 hover:text-white hover:bg-slate-800/80 border border-transparent transition">Home</a>
+            </nav>
+        </header>
+
+        <main class="space-y-6">
+            <section class="rounded-2xl border border-slate-800/80 bg-slate-900/70 shadow-xl overflow-hidden relative">
+                <div class="h-32 sm:h-48 bg-gradient-to-r from-slate-800 via-brand-500/20 to-slate-800 relative">
+                    <div
+                        class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-30 mix-blend-overlay">
+                    </div>
+                </div>
+
+                <div class="px-6 pb-6 relative">
+                    <div class="absolute -top-12 sm:-top-16 left-6">
+                        <div
+                            class="h-24 w-24 sm:h-32 sm:w-32 rounded-full border-4 border-slate-900 bg-slate-800 overflow-hidden shadow-xl flex items-center justify-center">
+                            {% if user['profile_picture'] %}
+                            <img src="{{ url_for('static', filename='uploads/profile_pics/' + user['profile_picture']) }}"
+                                alt="{{ user['name'] }}" class="h-full w-full object-cover">
+                            {% else %}
+                            <span class="text-3xl sm:text-5xl font-bold text-brand-400">{{ user["name"][:2].upper()
+                                }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end pt-4 sm:pt-6 mb-4 sm:mb-0 min-h-[40px] sm:min-h-[50px]">
+                        {% if current_user.is_authenticated and current_user.id == user['id'] %}
+                        <a href="{{ url_for('profile') }}"
+                            class="inline-flex items-center gap-2 rounded-full bg-slate-800 hover:bg-slate-700 text-white px-5 py-2 text-sm font-semibold border border-slate-700 shadow-sm transition-all duration-300">
+                            <i class="fa-solid fa-pen"></i> Edit Profile
+                        </a>
+                        {% else %}
+                        <a href="{{ url_for('chat', receiver_id=user['id']) }}"
+                            class="inline-flex items-center gap-2 rounded-full bg-brand-500 hover:bg-brand-400 text-slate-950 px-5 py-2 text-sm font-semibold shadow-lg shadow-brand-500/20 hover:scale-105 transition-all duration-300">
+                            <i class="fa-solid fa-paper-plane"></i> Message Stackmach
+                        </a>
+                        {% endif %}
+                    </div>
+
+                    <div class="mt-8 sm:mt-2">
+                        <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">{{ user['name'] }}</h1>
+
+                        {% if user['headline'] %}
+                        <p class="text-base sm:text-lg text-slate-300 mt-1 max-w-2xl font-light">{{ user['headline'] }}
+                        </p>
+                        {% endif %}
+
+                        <div class="flex items-center gap-4 mt-3 text-sm text-slate-400">
+                            <div class="flex items-center gap-1.5">
+                                <i class="fa-solid fa-location-dot"></i>
+                                <span>{{ user['location'] or "Remote" }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="grid gap-6 md:grid-cols-[2fr_1fr]">
+                <div class="space-y-6">
+                    <section class="rounded-2xl border border-slate-800/80 bg-slate-900/70 p-6 shadow-sm">
+                        <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-code text-brand-400"></i> Skills
+                        </h2>
+                        {% if user['skills'] %}
+                        <div class="flex flex-wrap gap-2 text-sm">
+                            {% for skill in user['skills'].split(',') %}
+                            {% if skill.strip() %}
+                            <span
+                                class="px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700/80 text-slate-200">
+                                {{ skill.strip() }}
+                            </span>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-sm text-slate-400">No specific skills listed.</p>
+                        {% endif %}
+                    </section>
+
+                    <section class="rounded-2xl border border-slate-800/80 bg-slate-900/70 p-6 shadow-sm">
+                        <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-link text-brand-400"></i> Project & Certificate Links
+                        </h2>
+                        {% if user['project_links'] %}
+                        <div class="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed">{{ user['project_links']
+                            }}</div>
+                        {% else %}
+                        <p class="text-sm text-slate-400">No project links provided.</p>
+                        {% endif %}
+                    </section>
+                </div>
+
+                <div class="space-y-6">
+                    <section class="rounded-2xl border border-slate-800/80 bg-slate-900/70 p-6 shadow-sm">
+                        <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-trophy text-brand-400"></i> Hackathon Experience
+                        </h2>
+                        <div class="space-y-4">
+                            <div>
+                                <p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Hackathons
+                                    Attended</p>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-2xl font-bold text-white">{{ user['num_hackathons'] or "0"
+                                        }}</span>
+                                </div>
+                            </div>
+
+                            {% if user['hackathon_role'] %}
+                            <div>
+                                <p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Past Role
+                                </p>
+                                <p class="text-sm text-slate-200">{{ user['hackathon_role'] }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </section>
+
+                    <section class="rounded-2xl border border-slate-800/80 bg-slate-900/70 p-6 shadow-sm">
+                        <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-graduation-cap text-brand-400"></i> Education & Role
+                        </h2>
+                        <div class="space-y-4">
+                            <div>
+                                <p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Education
+                                    Level</p>
+                                <p class="text-sm text-slate-200">{{ user['education_level'] or "Not specified" }}</p>
+                            </div>
+
+                            <div>
+                                <p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Preferred
+                                    Role</p>
+                                <p class="text-sm text-slate-200">
+                                    {% if user['role'] %}
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium bg-brand-500/10 text-brand-400 border border-brand-500/20">
+                                        {{ user['role'] }}
+                                    </span>
+                                    {% else %}
+                                    Not specified
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>
